@@ -2,21 +2,30 @@
 # -*- coding: utf-8 -*-
 
 import discord
+import motor.motor_asyncio
+import gspread_asyncio
 from discord.ext import commands
+from google.oauth2 import service_account
+
 
 import config
-import asyncpg
 
 class Bot(commands.Bot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix=commands.when_mentioned_or('%'), **kwargs)
         self.loop.create_task(self.async_init())
 
+
+        # MongoDB
+        self.db_client = motor.motor_asyncio.AsyncIOMotorClient(config.mongodb)
+
+        # Google Cloud (and related products)
+        credentials = service_account.Credentials.from_service_account_file(config.gc_json)
+        scoped_credentials = credentials.with_scopes(config.gc_scopes)
+        self.gc_client = gspread_asyncio.AsyncioGspreadClientManager(lambda: scoped_credentials)
+
     async def async_init(self):
-        try:
-            self.pool = await asyncpg.connect(config.pool)
-        except:
-            self.pool = "peepee poopoo"
+        self.gc_client = await self.gc_client.authorize()
 
     async def on_ready(self):
         # Load cogs
@@ -26,7 +35,6 @@ class Bot(commands.Bot):
             except Exception as exc:
                 print(f'Could not load extension {cog} due to {exc.__class__.__name__}: {exc}')
 
-        # Set bot status
         await self.change_presence(activity=discord.Game(f"%help | Online on {len(self.guilds)} servers"))
         print(f'Logged on as {self.user} (ID: {self.user.id})')
 
