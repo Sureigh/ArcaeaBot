@@ -15,7 +15,6 @@ class Bot(commands.Bot):
         super().__init__(command_prefix=commands.when_mentioned_or('%'), **kwargs)
         self.loop.create_task(self.async_init())
 
-
         # MongoDB
         self.db_client = motor.motor_asyncio.AsyncIOMotorClient(config.mongodb)
 
