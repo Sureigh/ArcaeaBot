@@ -13,18 +13,32 @@ import config
 class Bot(commands.Bot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix=commands.when_mentioned_or('%'), **kwargs)
-        self.loop.create_task(self.async_init())
 
         # MongoDB
-        self.db_client = motor.motor_asyncio.AsyncIOMotorClient(config.mongodb)
+        client = motor.motor_asyncio.AsyncIOMotorClient(config.mongodb)
+        self.db = client["ArcaeaBot"]
 
         # Google Cloud (and related products)
         credentials = service_account.Credentials.from_service_account_file(config.gc_json)
         scoped_credentials = credentials.with_scopes(config.gc_scopes)
         self.gc_client = gspread_asyncio.AsyncioGspreadClientManager(lambda: scoped_credentials)
+        self.songs = None
+
+        self.loop.create_task(self.async_init())
 
     async def async_init(self):
         self.gc_client = await self.gc_client.authorize()
+
+        # GSheet data grabber - grabs data when requested, otherwise ignores and uses cached data
+        async def grab_songs(client, gc_client):
+            # TODO: Modify this condition in the future - if there are new song entries on the wiki, then proceed
+            if client.songs is None:
+                spreadsheet = await gc_client.open("Arcaea Songs")
+                # TODO: When we eventually remove the first manually-made sheet, change reference to sheet below
+                worksheet = await spreadsheet.worksheet("Song List ArcBot2")
+                return await worksheet.get_all_values()
+
+        self.songs = await grab_songs(self, self.gc_client)
 
     async def on_ready(self):
         # Load cogs
