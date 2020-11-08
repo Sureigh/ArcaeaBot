@@ -27,4 +27,4 @@ var/
 # Our configuration files
 config.py
 arcaeabot-99f7b035456b.json
-test.py
+*.log
