@@ -31,6 +31,7 @@ def main():
             for cog in config.cogs:
                 try:
                     self.load_extension(f"cogs.{cog}")
+                    print(f"Loaded cog {cog} successfully")
                 except Exception as exc:
                     print(f'Could not load extension {cog} due to {exc.__class__.__name__}: {exc}')
 
