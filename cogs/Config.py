@@ -26,7 +26,6 @@ class Config(commands.Cog):
         bot.loop.create_task(self.async_init())
 
         self.bot = bot
-        self.db = bot.db
         self.gc_client = bot.gc_client
 
     async def async_init(self):
@@ -77,14 +76,6 @@ class Config(commands.Cog):
             embed.color = discord.Color.red()
 
         await msg.edit(embed=embed)
-
-    # TODO: Something like this as well. Perhaps send two, or three dicts per message, so as to not
-    #  overload the 2000 char limit, in a nice spool, with the requested amount filling the length parameter.
-    #  Maybe you'll be smart about writing functions to unroll it all, eh?
-    @commands.command()
-    async def lemme_see_db(self, ctx):
-        cursor = self.db["Songs"].find()
-        await ctx.send(str([doc for doc in await cursor.to_list(length=None)])[:2000])
 
 
 def setup(bot):
